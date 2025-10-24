@@ -41,7 +41,11 @@ class HotPlugCapableDevice
          */
         static const char* getDeviceName()
         {
-            return program_invocation_short_name;
+            #ifdef __APPLE__
+                return getprogname();
+            #else
+                return program_invocation_short_name;
+            #endif
         }
 
         /**
