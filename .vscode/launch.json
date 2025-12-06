@@ -8,36 +8,26 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug INDI Driver",
-      "type": "cppdbg",
+      "name": "Launch indiserver",
+      "type": "lldb",
       "request": "launch",
       "program": "${workspaceFolder}/build/indiserver/indiserver",
       "args": [
         "-v",
-        "${workspaceFolder}/build/drivers/ccd/indi_alpaca_ccd",
-        "indi_simulator_telescope"
+        "${workspaceFolder}/build/drivers/telescope/indi_celestron_cgx"
       ],
       "postDebugTask": "Kill indiserver",
-      "stopAtEntry": false,
-      "cwd": "${fileDirname}",
-      "environment": [],
-      "externalConsole": false,
-      "MIMode": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        },
-        {
-          "description": "Set Disassembly Flavor to Intel",
-          "text": "-gdb-set disassembly-flavor intel",
-          "ignoreFailures": true
-        },
-        {
-          "text": "-gdb-set follow-fork-mode child"
-        }
-      ]
+      // "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      // "environment": [], 
+      // "externalConsole": false,
+    },
+    {
+        "name": "Attach CGX",
+        "type": "lldb",
+        "request": "attach",
+        "program": "indi_celestron_cgx"
     }
   ]
 }
+

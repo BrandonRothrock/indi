@@ -674,7 +674,7 @@ bool CelestronCGX::ReadScopeStatus()
 
 bool CelestronCGX::Goto(double r, double d)
 {
-    StartSlew(r, d, SCOPE_SLEWING);
+    StartSlew(r, d, SCOPE_SLEWING, true);
     return true;
 }
 

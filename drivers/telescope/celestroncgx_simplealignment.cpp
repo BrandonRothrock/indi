@@ -46,7 +46,11 @@ void EQAlignment::EncoderValuesFromRADec(double ra, double dec, uint32_t &raStep
 
     // Inverse of RADecFromEncoderValues
     double lst       = localSiderealTime();
-    double hourAngle = lst - ra;
+    double hourAngle = fmod(lst - ra + 12.0, 24.0);
+
+    // keep hour angle between +/- 12h
+    if (hourAngle < 0) hourAngle += 24.0;
+    hourAngle -= 12.0;    
 
     if (pierSide == PIER_WEST)
     {
