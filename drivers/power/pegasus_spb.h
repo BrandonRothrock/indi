@@ -26,6 +26,7 @@
 
 #include "defaultdevice.h"
 #include "indiweatherinterface.h"
+#include "indipowerinterface.h"
 
 #include <vector>
 #include <stdint.h>
@@ -34,10 +35,8 @@ namespace Connection
 {
 class Serial;
 }
-const char *ADJ_HUB_TAB  = "Adjustable HUB";
-const char *POWER_TAB  = "Power";
-const char *DEW_TAB  = "Dew";
-class PegasusSPB : public INDI::DefaultDevice, public INDI::WeatherInterface
+
+class PegasusSPB : public INDI::DefaultDevice, public INDI::WeatherInterface, public INDI::PowerInterface
 {
 
     public:
@@ -48,6 +47,7 @@ class PegasusSPB : public INDI::DefaultDevice, public INDI::WeatherInterface
 
         virtual bool ISNewNumber(const char *dev, const char *name, double values[], char *names[], int n) override;
         virtual bool ISNewSwitch(const char *dev, const char *name, ISState *states, char *names[], int n) override;
+        virtual bool ISNewText(const char * dev, const char * name, char * texts[], char * names[], int n) override;
 
         enum PORT_MODE
         {
@@ -92,21 +92,22 @@ class PegasusSPB : public INDI::DefaultDevice, public INDI::WeatherInterface
         };
         enum
         {
-            SENSOR_VOLTAGE,
-            SENSOR_CURRENT,
             SENSOR_AVG_AMPS,
             SENSOR_AMP_HOURS,
             SENSOR_WATT_HOURS,
-            SENSOR_TOTAL_CURRENT,
-            SENSOR_12V_CURRENT,
-            SENSOR_DEWA_CURRENT,
-            SENSOR_DEWB_CURRENT
+            SENSOR_EXT_N
         };
     protected:
         const char *getDefaultName() override;
-        //virtual bool saveConfigItems(FILE *fp) override;
-
+        virtual bool saveConfigItems(FILE *fp) override;
         virtual void TimerHit() override;
+
+        virtual bool SetPowerPort(size_t port, bool enabled) override;
+        virtual bool SetDewPort(size_t port, bool enabled, double dutyCycle) override;
+        virtual bool SetVariablePort(size_t port, bool enabled, double voltage) override;
+        virtual bool SetLEDEnabled(bool enabled) override;
+        virtual bool SetAutoDewEnabled(size_t port, bool enabled) override;
+        virtual bool SetUSBPort(size_t port, bool enabled) override;
 
         // Weather Overrides
         virtual IPState updateWeather() override
@@ -114,17 +115,13 @@ class PegasusSPB : public INDI::DefaultDevice, public INDI::WeatherInterface
             return IPS_OK;
         }
 
-
-
     private:
         bool Handshake();
 
         bool sendCommand(const char *cmd, char *res);
-        bool setQuadPowerState(bool enabled);
+        bool setFixedPowerPortState(int portNumber, bool enabled);
         bool setPowerDewPortMode(int portNumber, int mode);
         int getPowerDewPortMode(int portNumber);
-        bool setPowerPortState(int portNumber, bool enabled);
-        bool getPowerPortState(int portNumber);
         int getDewPortPower(int portNumber);
         bool setDewPortPower(int portNumber, int power);
         bool setDewAutoState(bool enabled);
@@ -138,8 +135,6 @@ class PegasusSPB : public INDI::DefaultDevice, public INDI::WeatherInterface
         bool getConsumptionData();
         bool getMetricsData();
         void updatePropertiesPowerDewMode(int portNumber, int mode);
-
-
 
         int PortFD { -1 };
         bool setupComplete { false };
@@ -155,36 +150,19 @@ class PegasusSPB : public INDI::DefaultDevice, public INDI::WeatherInterface
         static constexpr const char *ENVIRONMENT_TAB {"Environment"};
         double map(double value, double from1, double to1, double from2, double to2);
 
-
-
-
         ////////////////////////////////////////////////////////////////////////////////////
         /// Main Control
         ////////////////////////////////////////////////////////////////////////////////////
 
         // Power Sensors
-        INDI::PropertyNumber PowerSensorsNP {9};
+        INDI::PropertyNumber ExtendedPowerNP {3};
 
         ////////////////////////////////////////////////////////////////////////////////////
         /// Adjustable Hub
         ////////////////////////////////////////////////////////////////////////////////////
         INDI::PropertySwitch PowerDewSwitchASP {2};
-        INDI::PropertySwitch PowerAdjASP {2};
-        INDI::PropertyNumber DewAdjANP {1};
-
         INDI::PropertySwitch PowerDewSwitchBSP {2};
-        INDI::PropertySwitch PowerAdjBSP {2};
-        INDI::PropertyNumber DewAdjBNP {1};
-
-        INDI::PropertySwitch DewAutoSP {2};
         INDI::PropertyNumber DewAggressNP {1};
-
-        ////////////////////////////////////////////////////////////////////////////////////
-        /// Power Group
-        ////////////////////////////////////////////////////////////////////////////////////
-
-
-        INDI::PropertySwitch QuadPowerSP {2};
 
         ////////////////////////////////////////////////////////////////////////////////////
         /// Sensor Offset

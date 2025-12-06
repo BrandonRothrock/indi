@@ -385,6 +385,10 @@
             <driver name="Gemini Focusing Rotator">indi_gemini_focus</driver>
             <version>1.0</version>
         </device>
+        <device label="iOptron Focusing Rotator" manufacturer="iOptron">
+            <driver name="iOptron Focusing Rotator">indi_iafscaa_focus</driver>
+            <version>1.0</version>
+        </device>
         <device label="Pyxis" manufacturer="Optec">
             <driver name="Pyxis">indi_pyxis_rotator</driver>
             <version>1.1</version>
@@ -573,7 +577,19 @@
         </device>
         <device label="Sesto Senso 2" manufacturer="Primaluce Lab">
             <driver name="Sesto Senso 2">indi_sestosenso2_focus</driver>
-            <version>0.7</version>
+            <version>1.0</version>
+        </device>
+        <device label="Sesto Senso 3" manufacturer="Primaluce Lab">
+            <driver name="Sesto Senso 2">indi_sestosenso2_focus</driver>
+            <version>1.0</version>
+        </device>
+        <device label="Sesto Senso 3 SC" manufacturer="Primaluce Lab">
+            <driver name="Sesto Senso 2">indi_sestosenso2_focus</driver>
+            <version>1.0</version>
+        </device>
+        <device label="Sesto Senso 3 LS" manufacturer="Primaluce Lab">
+            <driver name="Sesto Senso 2">indi_sestosenso2_focus</driver>
+            <version>1.0</version>
         </device>
         <device label="Esatto" manufacturer="Primaluce Lab">
             <driver name="Esatto">indi_esatto_focus</driver>
@@ -745,6 +761,10 @@
     <devGroup group="Auxiliary">
         <device label="Astrometry" manufacturer="Others">
             <driver name="Astrometry">indi_astrometry</driver>
+            <version>0.1</version>
+        </device>
+        <device label="Safety Monitor" manufacturer="Others">
+            <driver name="Safety Monitor">indi_safetymonitor</driver>
             <version>0.1</version>
         </device>
         <device label="INDI Alpaca Server" manufacturer="Alpaca">
@@ -991,6 +1011,10 @@
             <driver name="WeatherFlow Tempest">indi_weatherflow_weather</driver>
             <version>1.0</version>
         </device>
+        <device label="HiTech Weather" manufacturer="HiTech Instruments">
+            <driver name="HiTech Weather">indi_hitech_weather</driver>
+            <version>1.0</version>
+        </device>
     </devGroup>
     <devGroup group="Agent">
         <device label="Imager Agent" manufacturer="Others">
@@ -1045,6 +1069,14 @@
         </device>
         <device label="CheapoDC" manufacturer="DIY">
             <driver name="CheapoDC">indi_cheapodc</driver>
+            <version>1.0</version>
+        </device>
+        <device label="Celestron Smart DewHeater and Power Controller 4X" manufacturer="Celestron">
+            <driver name="Celestron Dew Power">indi_celestron_dewpower</driver>
+            <version>1.0</version>
+        </device>
+        <device label="Celestron Smart DewHeater Controller 2X" manufacturer="Celestron">
+            <driver name="Celestron Dew Power">indi_celestron_dewpower</driver>
             <version>1.0</version>
         </device>
     </devGroup>

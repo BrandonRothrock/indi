@@ -164,6 +164,7 @@ list(APPEND ${PROJECT_NAME}_SOURCES
     indirotatorinterface.cpp
     indiinputinterface.cpp
     indioutputinterface.cpp
+    indipowerinterface.cpp
     indidome.cpp
     indigps.cpp
     indiimu.cpp        
@@ -210,6 +211,7 @@ list(APPEND ${PROJECT_NAME}_HEADERS
     indirotatorinterface.h
     indiinputinterface.h
     indioutputinterface.h
+    indipowerinterface.h
     timer/inditimer.h
     timer/indielapsedtimer.h
     thread/indisinglethreadpool.h
@@ -246,7 +248,10 @@ if(TRUE)
     add_library(${PROJECT_NAME}_OBJECT OBJECT)
     set_property(TARGET ${PROJECT_NAME}_OBJECT PROPERTY POSITION_INDEPENDENT_CODE 1)
 
-    target_compile_definitions(${PROJECT_NAME}_OBJECT PRIVATE "-DHAVE_LIBNOVA")
+    target_compile_definitions(${PROJECT_NAME}_OBJECT PRIVATE
+        HAVE_LIBNOVA
+        $<$<BOOL:${UDEV_FOUND}>:HAVE_UDEV>
+    )
 
     target_sources(${PROJECT_NAME}_OBJECT
         PUBLIC
@@ -295,9 +300,12 @@ if(INDI_BUILD_STATIC)
         VERSION ${CMAKE_INDI_VERSION_STRING}
         SOVERSION ${INDI_SOVERSION}
         OUTPUT_NAME ${PROJECT_NAME} # this same name like shared library - backwards compatibility
-        # Propagate HAVE_UDEV to consumers of the static library
-        $<$<BOOL:${UDEV_FOUND}>:INTERFACE_COMPILE_DEFINITIONS -DHAVE_UDEV>
     )
+
+    # Propagate HAVE_UDEV to consumers of the static library
+    if(UDEV_FOUND)
+        target_compile_definitions(${TARGET_STATIC} INTERFACE HAVE_UDEV)
+    endif()
 
     install(TARGETS ${TARGET_STATIC}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -315,9 +323,12 @@ if(INDI_BUILD_SHARED)
         VERSION ${CMAKE_INDI_VERSION_STRING}
         SOVERSION ${INDI_SOVERSION}
         OUTPUT_NAME ${PROJECT_NAME}
-        # Propagate HAVE_UDEV to consumers of the shared library
-        $<$<BOOL:${UDEV_FOUND}>:INTERFACE_COMPILE_DEFINITIONS -DHAVE_UDEV>
     )
+
+    # Propagate HAVE_UDEV to consumers of the shared library
+    if(UDEV_FOUND)
+        target_compile_definitions(${TARGET_SHARED} INTERFACE HAVE_UDEV)
+    endif()
 
     install(TARGETS ${TARGET_SHARED}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -1,5 +1,5 @@
 /*
-    myDCP4ESP32 
+    myDCP4ESP32
     Copyright (C) 2023 Stephen Hillier
 
     Based on MyFocuserPro2 Focuser
@@ -30,11 +30,15 @@
 #pragma once
 
 #include <defaultdevice.h>
+#include <indipowerinterface.h>
 
 #include <time.h>           // for nsleep() 
 #include <errno.h>          // for nsleep() 
 
-#define CDRIVER_VERSION_MAJOR           1
+// Version 1.0 - First release.
+// Version 2.0 - Refactor for INDI::Power Interface
+
+#define CDRIVER_VERSION_MAJOR           2
 #define CDRIVER_VERSION_MINOR           0
 
 /***************************** myDCP4ESP32 Commands **************************/
@@ -132,17 +136,28 @@
 
 /******************************************************************************/
 
-class MyDCP4ESP : public INDI::DefaultDevice
+class MyDCP4ESP : public INDI::DefaultDevice, public INDI::PowerInterface
 {
     public:
         MyDCP4ESP();
         virtual ~MyDCP4ESP() = default;
+
+        // Power Interface Implementations
+        virtual bool SetPowerPort(size_t port, bool enabled) override;
+        virtual bool SetDewPort(size_t port, bool enabled, double dutyCycle) override;
+        virtual bool SetVariablePort(size_t port, bool enabled, double voltage) override;
+        virtual bool SetLEDEnabled(bool enabled) override;
+        virtual bool SetAutoDewEnabled(size_t port, bool enabled) override;
+        virtual bool CyclePower() override;
+        virtual bool SetUSBPort(size_t port, bool enabled) override;
 
         virtual const char *getDefaultName() override;
         virtual bool initProperties() override;
         virtual bool updateProperties() override;
         virtual bool ISNewNumber(const char *dev, const char *name, double values[], char *names[], int n) override;
         virtual bool ISNewSwitch(const char *dev, const char *name, ISState *states, char *names[], int n) override;
+        virtual bool ISNewText(const char *dev, const char *name, char *texts[], char *names[], int n) override;
+        virtual bool saveConfigItems(FILE *fp) override;
         virtual void TimerHit() override;
 
         /**
@@ -159,7 +174,6 @@ class MyDCP4ESP : public INDI::DefaultDevice
     private:
         int  timerIndex;
         int  myDCP4Firmware = 0;
-        bool ch3ManualPower = false;
         float channelActive[4] = {1};
         int  msleep( long duration);
         bool sendCommand(const char *cmd, char *response);
@@ -180,7 +194,7 @@ class MyDCP4ESP : public INDI::DefaultDevice
         Connection::TCP *tcpConnection { nullptr };
 
         int PortFD { -1 };
-        
+
         uint8_t mdcpConnection { CONNECTION_SERIAL | CONNECTION_TCP };
 
         // MyDCP4ESP Timeouts
@@ -195,8 +209,7 @@ class MyDCP4ESP : public INDI::DefaultDevice
             CH3MODE_MANUAL,
             CH3MODE_CH3TEMP
         };
-        
-        INDI::PropertyNumber ChannelPowerNP{4};
+
         INDI::PropertySwitch TempProbeFoundSP{4};
         INDI::PropertyNumber TemperatureNP{4};
         INDI::PropertyNumber ChannelOffsetNP{4};
@@ -207,10 +220,8 @@ class MyDCP4ESP : public INDI::DefaultDevice
         INDI::PropertyNumber DewpointNP{1};
         INDI::PropertySwitch TrackingModeSP{3};
         INDI::PropertyNumber TrackingOffsetNP{1};
-        INDI::PropertyNumber Ch3ManualPowerNP{1};
         INDI::PropertySwitch Ch3ModeSP{5};
-        INDI::PropertySwitch RebootSP{1};
         INDI::PropertyText   CheckCodeTP{1};
         INDI::PropertyNumber FWversionNP{1};
-        
+
 };

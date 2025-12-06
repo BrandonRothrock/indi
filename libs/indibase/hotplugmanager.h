@@ -26,8 +26,8 @@
 #include <vector>
 #include <mutex>
 #include <map>
-#include <thread>   // For std::thread
 #include <atomic>   // For std::atomic_bool
+#include <chrono>   // For std::chrono::steady_clock::time_point
 
 #ifdef HAVE_UDEV
 #include <libudev.h> // For udev hotplugging
@@ -54,16 +54,11 @@ class HotPlugManager
         static HotPlugManager &getInstance();
 
         /**
-         * @brief Get the executable name of the running program.
-         * @return The executable name as a const char*.
+         * @brief Static name used for LOGGING purposes.
          */
         static const char* getDeviceName()
         {
-            #ifdef __APPLE__
-                return getprogname();
-            #else
-                return program_invocation_short_name;
-            #endif
+            return "HotPlugManager";
         }
 
         /**
@@ -90,6 +85,20 @@ class HotPlugManager
          */
         void stop();
 
+        /**
+         * @brief Set the maximum polling duration for non-udev systems (macOS, Windows).
+         * @param seconds Maximum duration in seconds. 0 = unlimited polling, -1 = use default (60 seconds).
+         * @note This only affects systems without udev. Linux with udev uses event-driven monitoring with no time limit.
+         */
+        void setNonUdevPollingDuration(int seconds);
+
+        /**
+         * @brief Set the maximum initial polling duration for systems with udev.
+         * @param seconds Maximum duration in seconds. Must be between 1 and MAX_NON_UDEV_POLL_DURATION_SECONDS. -1 = use default (5 seconds).
+         * @note This only affects the initial polling period on systems with udev. After initial polling, event-driven monitoring is used.
+         */
+        void setInitialPollingDuration(int seconds);
+
     private:
         /**
          * @brief Periodically checks for hot-plug events across all registered handlers.
@@ -97,7 +106,17 @@ class HotPlugManager
         void checkHotPlugEvents();
         bool initUdev();
         void deinitUdev();
-        void udevEventMonitor();
+
+        /**
+         * @brief Handles udev events when the file descriptor becomes readable.
+         * @param fd The udev monitor file descriptor
+         */
+        void handleUdevEvent(int fd);
+
+        /**
+         * @brief Static callback wrapper for the event loop (C linkage compatible).
+         */
+        static void udevCallbackWrapper(int fd, void* userdata);
 
         std::vector<std::shared_ptr<HotPlugCapableDevice>> registeredHandlers;
         INDI::Timer hotPlugTimer;
@@ -106,11 +125,15 @@ class HotPlugManager
 #ifdef HAVE_UDEV
         udev* udevContext;
         udev_monitor* udevMonitor;
-        std::thread udevMonitorThread;
+        int udevCallbackId;  // Callback ID for event loop
 #endif
-        std::atomic_bool udevMonitorRunning;
         std::atomic_int pollingCount;
         std::atomic_bool oneShotMode;
+        std::chrono::steady_clock::time_point nonUdevPollingStartTime;
+        std::atomic_int nonUdevPollingDurationSeconds;  // Configurable max duration for non-udev polling (-1 = default 60s, 0 = unlimited)
+        std::atomic_int initialPollingDurationSeconds;  // Configurable max duration for initial polling with udev (-1 = default 5s)
+        std::atomic_bool udevEventReceived;
+        INDI::Timer mainThreadDebounceTimer;
 };
 
 } // namespace INDI

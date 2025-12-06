@@ -82,18 +82,19 @@ bool LX200AM5::initProperties()
 
     // Slew Rates
 
-    SlewRateSP[0].setLabel("0.5x");
-    SlewRateSP[1].setLabel("1x");
-    SlewRateSP[2].setLabel("2x");
-    SlewRateSP[3].setLabel("4x");
-    SlewRateSP[4].setLabel("8x");
-    SlewRateSP[5].setLabel("20x");
-    SlewRateSP[6].setLabel("60x");
-    SlewRateSP[7].setLabel("720x");
-    SlewRateSP[8].setLabel("1440x");
+    SlewRateSP[0].setLabel("0.25x");
+    SlewRateSP[1].setLabel("0.5x");
+    SlewRateSP[2].setLabel("1x");
+    SlewRateSP[3].setLabel("2x");
+    SlewRateSP[4].setLabel("4x");
+    SlewRateSP[5].setLabel("8x");
+    SlewRateSP[6].setLabel("20x");
+    SlewRateSP[7].setLabel("60x");
+    SlewRateSP[8].setLabel("720x");
+    SlewRateSP[9].setLabel("1440x");
     SlewRateSP.reset();
     // 1440x is the default
-    SlewRateSP[8].setState(ISS_ON);
+    SlewRateSP[9].setState(ISS_ON);
 
     // Home/Zero position
     // HomeSP[0].fill("GO", "Go", ISS_OFF);
@@ -802,7 +803,13 @@ bool LX200AM5::goHome()
 /////////////////////////////////////////////////////////////////////////////
 bool LX200AM5::park()
 {
-    return sendCommand(":hP#");
+    // JM 2025.11.08: Many users do not like default ZWO parking position
+    // which is horizontal and does not go back to expected home position
+    // with CW down and looking at celestial pole.
+    // For now this is reverted now back to go back to that position instead
+    // of parking until ZWO releases update for custom parking positions.
+    return goHome();
+    //return sendCommand(":hP#");
 }
 
 /////////////////////////////////////////////////////////////////////////////
