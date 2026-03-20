@@ -511,7 +511,7 @@ bool CelestronCGX::handleCommand(AUXCommand cmd)
         break;
     }
 
-    fprintf(stderr, "unknown command 0x%02x ", cmd.cmd);
+    fprintf(stderr, "Unknown CMD=0x%02x src=0x%02x dst=0x%02x ", cmd.cmd, cmd.src, cmd.dst);
 
     buffer b;
     cmd.fillBuf(b);
