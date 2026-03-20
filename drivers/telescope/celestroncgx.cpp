@@ -157,14 +157,14 @@ bool CelestronCGX::updateProperties()
     {
         defineProperty(GuideNSNP);
         defineProperty(GuideWENP);
-        defineNumber(&GuideRateNP);
+        defineProperty(&GuideRateNP);
         loadConfig(true, GuideRateNP.name);
 
-        defineNumber(&EncoderTicksNP);
-        defineNumber(&LocationDebugNP);
+        defineProperty(&EncoderTicksNP);
+        defineProperty(&LocationDebugNP);
 
-        defineSwitch(&AlignSP);
-        defineText(&VersionTP);
+        defineProperty(&AlignSP);
+        defineProperty(&VersionTP);
 
         if (InitPark())
         {
@@ -677,7 +677,7 @@ bool CelestronCGX::SetTrackEnabled(bool enabled)
         Aux::buffer data(2);
 
         TelescopeTrackMode mode =
-            static_cast<TelescopeTrackMode>(IUFindOnSwitchIndex(TrackModeSP));
+            static_cast<TelescopeTrackMode>(TrackModeSP.findOnSwitchIndex());
 
         switch (mode)
         {
@@ -850,7 +850,7 @@ bool CelestronCGX::StartSlew(double ra, double dec, TelescopeStatus status, bool
 
 uint8_t CelestronCGX::slewRate()
 {
-    int index = IUFindOnSwitchIndex(SlewRateSP);
+    int index = SlewRateSP.findOnSwitchIndex();
 
     switch (index)
     {
