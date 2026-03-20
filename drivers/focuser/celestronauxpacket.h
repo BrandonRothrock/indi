@@ -50,13 +50,23 @@ enum Command
     MC_LEVEL_START = 0x0b,
     MC_SET_POS_BACKLASH = 0x10,    ///< 1 byte, 0-99
     MC_SET_NEG_BACKLASH = 0x11,    ///< 1 byte, 0-99
+    MC_LEVEL_DONE = 0x12,          ///< return 0xFF when level/index complete
     MC_SLEW_DONE = 0x13,          ///< return 0xFF when move finished
     MC_GOTO_SLOW = 0x17,          ///< send 24 bit target
     MC_SEEK_INDEX = 0x19,
     MC_MOVE_POS = 0x24,           ///< send move rate 0-9
     MC_MOVE_NEG = 0x25,           ///< send move rate 0-9
+    MC_AUX_GUIDE = 0x26,          ///< send guide pulse: [rate, duration_ticks]
+    MC_AUX_GUIDE_ACTIVE = 0x27,   ///< return 0x00 when guide pulse complete
+    MC_ENABLE_CORDWRAP = 0x38,    ///< enable cord wrap
+    MC_DISABLE_CORDWRAP = 0x39,   ///< disable cord wrap
+    MC_SET_CORDWRAP_POS = 0x3a,   ///< send 24 bit cord wrap position
+    MC_POLL_CORDWRAP = 0x3b,      ///< return cord wrap state
+    MC_GET_CORDWRAP_POS = 0x3c,   ///< return 24 bit cord wrap position
     MC_GET_POS_BACKLASH = 0x40,   ///< 1 byte, 0-99
     MC_GET_NEG_BACKLASH = 0x41,   ///<  1 byte, 0-99
+    MC_SET_AUTOGUIDE_RATE = 0x46, ///< set autoguide rate (1 byte, 0-255)
+    MC_GET_AUTOGUIDE_RATE = 0x47, ///< get autoguide rate (1 byte, 0-255)
 
     // common to all devices (maybe)
     GET_VER = 0xfe,             ///< return 2 or 4 bytes major.minor.build
@@ -89,6 +99,8 @@ enum Target
     HCP = 0x0d,
     AZM = 0x10,       ///< azimuth|hour angle axis motor
     ALT = 0x11,       ///< altitude|declination axis motor
+    RA  = 0x10,       ///< RA axis motor (alias for AZM on EQ mounts)
+    DEC = 0x11,       ///< Dec axis motor (alias for ALT on EQ mounts)
     FOCUSER = 0x12,   ///< focuser motor
     APP = 0x20,
     NEX_REMOTE = 0x22,
@@ -121,6 +133,11 @@ class Packet
 
         bool Parse (buffer buf);
 
+        /// Decode a 24-bit position value from the data payload
+        long getPosition();
+        /// Encode a 24-bit position value into the data payload
+        void setPosition(uint32_t p);
+
     private:
         uint8_t checksum(buffer data);
 };
@@ -140,6 +157,12 @@ class Communicator
         // send command with data but no reply
         bool commandBlind(int port, Target dest, Command cmd, buffer data);
 
+        // send command with data, get full packet reply (for response dispatch)
+        bool sendCommand(int port, Target dest, Command cmd, buffer data, Packet &replyPacket);
+
+        // non-blocking read of an unsolicited packet; returns false if nothing available
+        bool readUnsolicited(int port, Packet &reply);
+
         Target source;
 
         static std::string Device;
@@ -150,7 +173,7 @@ class Communicator
 
     private:
         bool sendPacket(int port, Target dest, Command cmd, buffer data);
-        bool readPacket(int port, Packet &reply);
+        bool readPacket(int port, Packet &reply, int timeoutSec = 2);
 };
 
 }

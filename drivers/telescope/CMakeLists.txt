@@ -124,9 +124,10 @@ install(TARGETS indi_celestron_gps RUNTIME DESTINATION bin)
 # ########## Celestron CGX ############
 add_executable(indi_celestron_cgx
     celestroncgx.cpp
-    celestroncgx_auxproto.cpp
-    celestroncgx_simplealignment.cpp)
+    celestroncgx_simplealignment.cpp
+    ${CMAKE_SOURCE_DIR}/drivers/focuser/celestronauxpacket.cpp)
 
+target_include_directories(indi_celestron_cgx PRIVATE ${CMAKE_SOURCE_DIR}/drivers/focuser)
 target_link_libraries(indi_celestron_cgx indidriver)
 
 install(TARGETS indi_celestron_cgx RUNTIME DESTINATION bin)

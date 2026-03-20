@@ -59,6 +59,14 @@ Packet::Packet(Target source, Target destination, Command command, buffer data)
     this->length = data.size() + 3;
 }
 
+Packet::Packet(Target source, Target destination, Command command)
+{
+    this->command = command;
+    this->source = source;
+    this->destination = destination;
+    this->length = 3;
+}
+
 void Packet::FillBuffer(buffer &buff)
 {
     buff.resize(this->length + 3);
@@ -124,6 +132,32 @@ uint8_t Packet::checksum(buffer packet)
     return (-cs & 0xff);
 }
 
+static const long STEPS_PER_REVOLUTION = 16777216;
+
+long Packet::getPosition()
+{
+    if (data.size() == 3)
+    {
+        unsigned int a = static_cast<unsigned int>(data[0]) << 16 |
+                         static_cast<unsigned int>(data[1]) << 8 |
+                         static_cast<unsigned int>(data[2]);
+        return static_cast<long>(a) % STEPS_PER_REVOLUTION;
+    }
+    return 0;
+}
+
+void Packet::setPosition(uint32_t p)
+{
+    data.resize(3);
+    p = p % STEPS_PER_REVOLUTION;
+    for (int i = 2; i >= 0; i--)
+    {
+        data[i] = static_cast<uint8_t>(p & 0xff);
+        p >>= 8;
+    }
+    length = 6;
+}
+
 /////////////////////////////////////////////
 /////////// Communicator
 /////////////////////////////////////////////
@@ -158,15 +192,17 @@ bool Communicator::sendPacket(int portFD, Target dest, Command cmd, buffer data)
     return true;
 }
 
-bool Communicator::readPacket(int portFD, Packet &reply)
+bool Communicator::readPacket(int portFD, Packet &reply, int timeoutSec)
 {
     char rxbuf[1] = {0};
     int nr = 0, ttyrc = 0;
     // look for header
     while(rxbuf[0] != Packet::AUX_HDR)
     {
-        if ( (ttyrc = tty_read(portFD, rxbuf, 1, SHORT_TIMEOUT, &nr) != TTY_OK))
+        if ( (ttyrc = tty_read(portFD, rxbuf, 1, timeoutSec, &nr) != TTY_OK))
         {
+            if (timeoutSec == 0)
+                return false;   // non-blocking read, nothing available
             char errmsg[MAXRBUF];
             tty_error_msg(ttyrc, errmsg, MAXRBUF);
             DEBUGFDEVICE(Communicator::Device.c_str(), INDI::Logger::DBG_ERROR,
@@ -174,8 +210,12 @@ bool Communicator::readPacket(int portFD, Packet &reply)
             return false;		// read failure is instantly fatal
         }
     }
+
+    // found header, use a reasonable timeout for the rest of the packet
+    int dataTimeout = timeoutSec > 0 ? timeoutSec : 1;
+
     // get length
-    if (tty_read(portFD, rxbuf, 1, SHORT_TIMEOUT, &nr) != TTY_OK)
+    if (tty_read(portFD, rxbuf, 1, dataTimeout, &nr) != TTY_OK)
     {
         char errmsg[MAXRBUF];
         tty_error_msg(ttyrc, errmsg, MAXRBUF);
@@ -191,7 +231,7 @@ bool Communicator::readPacket(int portFD, Packet &reply)
 
     // get source, destination, command, data and checksum
     char rxdata[MAXRBUF] = {0};
-    if ( (ttyrc = tty_read(portFD, rxdata, len + 1, SHORT_TIMEOUT, &nr) != TTY_OK))
+    if ( (ttyrc = tty_read(portFD, rxdata, len + 1, dataTimeout, &nr) != TTY_OK))
     {
         char errmsg[MAXRBUF];
         tty_error_msg(ttyrc, errmsg, MAXRBUF);
@@ -248,6 +288,21 @@ bool Communicator::commandBlind(int portFD, Target dest, Command cmd, buffer dat
 {
     buffer reply;
     return sendCommand(portFD, dest, cmd, data, reply);
+}
+
+// send command with data, get full packet reply (for response dispatch)
+bool Communicator::sendCommand(int portFD, Target dest, Command cmd, buffer data, Packet &replyPacket)
+{
+    if (!sendPacket(portFD, dest, cmd, data))
+        return false;
+
+    return readPacket(portFD, replyPacket);
+}
+
+// non-blocking read of an unsolicited packet
+bool Communicator::readUnsolicited(int portFD, Packet &reply)
+{
+    return readPacket(portFD, reply, 0);
 }
 
 }

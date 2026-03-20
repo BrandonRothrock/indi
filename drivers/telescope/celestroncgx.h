@@ -25,8 +25,10 @@
 #include "indiguiderinterface.h"
 #include "inditelescope.h"
 
-#include "celestroncgx_auxproto.h"
+#include "celestronauxpacket.h"
 #include "celestroncgx_simplealignment.h"
+
+#include <optional>
 
 /**
  * @brief The CelestronCGX class provides a simple mount simulator of an equatorial mount.
@@ -100,7 +102,7 @@ class CelestronCGX : public INDI::Telescope, public INDI::GuiderInterface
     static const double STEPS_PER_DEGREE;
 
     /// used by GoTo and Park
-    void StartSlew(double ra, double dec, TelescopeStatus status, bool skipPierSideCheck = false);
+    bool StartSlew(double ra, double dec, TelescopeStatus status, bool skipPierSideCheck = false);
 
     INumber LocationDebugN[2];
     INumberVectorProperty LocationDebugNP;
@@ -123,20 +125,22 @@ class CelestronCGX : public INDI::Telescope, public INDI::GuiderInterface
 
     bool m_raAligned{false};
     bool m_decAligned{false};
+    bool m_alignSettling{false};
+    int m_alignSettleCount{0};
 
     bool m_raSlewing{false};
     bool m_decSlewing{false};
 
-    double *m_raTarget{nullptr};
-    double *m_decTarget{nullptr};
+    std::optional<double> m_raTarget;
+    std::optional<double> m_decTarget;
 
     bool startAlign();
     bool getDec();
     bool getRA();
 
-    bool sendCmd(AUXCommand cmd);
-    bool readCmd(int timeout = 1);
-    bool handleCommand(AUXCommand cmd);
+    bool sendCmd(Aux::Command cmd, Aux::Target dest, Aux::buffer data = {});
+    bool handleResponse(Aux::Packet &pkt);
 
+    Aux::Communicator m_communicator;
     EQAlignment m_alignment;
 };
