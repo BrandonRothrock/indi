@@ -448,7 +448,12 @@ bool CelestronCGX::handleResponse(Aux::Packet &pkt)
         break;
     }
 
-    LOGF_WARN("Unknown CMD=0x%02x src=0x%02x dst=0x%02x", pkt.command, pkt.source, pkt.destination);
+    // Only warn for packets addressed to us; internal bus traffic between motor
+    // subsystems (e.g. motor↔encoder boards at 0x30/0x31) is expected and harmless.
+    if (pkt.destination == Aux::APP || pkt.destination == Aux::ANY)
+        LOGF_WARN("Unknown CMD=0x%02x src=0x%02x dst=0x%02x", pkt.command, pkt.source, pkt.destination);
+    else
+        LOGF_DEBUG("Bus traffic CMD=0x%02x src=0x%02x dst=0x%02x", pkt.command, pkt.source, pkt.destination);
 
     return true;
 }
