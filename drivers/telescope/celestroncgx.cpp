@@ -155,8 +155,8 @@ bool CelestronCGX::updateProperties()
 
     if (isConnected())
     {
-        defineNumber(GuideNSNP);
-        defineNumber(GuideWENP);
+        defineProperty(GuideNSNP);
+        defineProperty(GuideWENP);
         defineNumber(&GuideRateNP);
         loadConfig(true, GuideRateNP.name);
 
