@@ -831,6 +831,13 @@ bool CelestronCGX::StartSlew(double ra, double dec, TelescopeStatus status, bool
 
     Aux::Command cmd = raClose && decClose ? Aux::MC_GOTO_SLOW : Aux::MC_GOTO_FAST;
 
+    // Mark both axes as slewing before the first MC_SLEW_DONE reply arrives,
+    // so that ReadScopeStatus's "done" check on the very first poll doesn't
+    // see stale `false` values from before the slew started and prematurely
+    // flip TrackState to SCOPE_TRACKING.
+    m_raSlewing  = true;
+    m_decSlewing = true;
+
     Aux::Packet raCmd(Aux::ANY, Aux::RA, cmd);
     raCmd.setPosition(raSteps);
     if (!sendCmd(cmd, Aux::RA, raCmd.data))

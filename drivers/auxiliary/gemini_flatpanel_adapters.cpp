@@ -1,6 +1,7 @@
 #include "gemini_flatpanel_adapters.h"
 #include "indicom.h"
 #include "indibase.h"
+#include <stdlib.h>
 #include <termios.h>
 #include <cstring>
 #include <cstdio>
